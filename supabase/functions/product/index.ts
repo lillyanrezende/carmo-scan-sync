@@ -21,11 +21,25 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Validate authentication
+    // Validate authentication and get user
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('Missing authorization header');
     }
+
+    // Get authenticated user
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    
+    if (userError || !user) {
+      throw new Error('Invalid or expired token');
+    }
+
+    // Check if user has elevated access for pricing info
+    const { data: hasElevatedAccess } = await supabase
+      .rpc('has_elevated_access', { _user_id: user.id });
+
+    console.log('User access level:', { user_id: user.id, has_elevated_access: hasElevatedAccess });
 
     // Parse query parameters
     const url = new URL(req.url);
@@ -92,6 +106,12 @@ Deno.serve(async (req) => {
         throw new Error(`Erro ao carregar dados do produto`);
       }
 
+      // Remove pricing info if user doesn't have elevated access
+      if (!hasElevatedAccess) {
+        delete produtoData.preco_custo;
+        delete produtoData.preco_venda;
+      }
+
       produto = {
         ...produtoData,
         barcode: barcode,
@@ -130,6 +150,12 @@ Deno.serve(async (req) => {
 
       if (produtoError || !produtoData) {
         throw new Error(`Produto não encontrado para SKU: ${skuOrEan}`);
+      }
+
+      // Remove pricing info if user doesn't have elevated access
+      if (!hasElevatedAccess) {
+        delete produtoData.preco_custo;
+        delete produtoData.preco_venda;
       }
 
       produto = produtoData;
@@ -171,7 +197,7 @@ Deno.serve(async (req) => {
       stock_total: estoques?.reduce((sum, e) => sum + parseFloat(e.quantidade || '0'), 0) || 0,
     };
 
-    console.log('Product found:', { id: produto_id, sku: produto.sku, nome: produto.nome });
+    console.log('Product found:', { id: produto_id, sku: produto.sku, has_pricing: hasElevatedAccess });
 
     return new Response(
       JSON.stringify(result),

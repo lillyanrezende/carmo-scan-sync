@@ -44,6 +44,45 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: number
+          ip_address: unknown | null
+          new_data: Json | null
+          old_data: Json | null
+          record_id: number | null
+          table_name: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: number
+          ip_address?: unknown | null
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: number | null
+          table_name?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: number
+          ip_address?: unknown | null
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: number | null
+          table_name?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       categorias: {
         Row: {
           criado_em: string | null
@@ -103,6 +142,13 @@ export type Database = {
             columns: ["produto_id"]
             isOneToOne: false
             referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoques_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos_public"
             referencedColumns: ["id"]
           },
         ]
@@ -211,6 +257,13 @@ export type Database = {
             referencedRelation: "produtos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "movimentacao_estoque_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       product_barcodes: {
@@ -244,6 +297,13 @@ export type Database = {
             columns: ["produto_id"]
             isOneToOne: false
             referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_barcodes_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos_public"
             referencedColumns: ["id"]
           },
         ]
@@ -372,9 +432,72 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      produtos_public: {
+        Row: {
+          atualizado_em: string | null
+          cor: string | null
+          criado_em: string | null
+          descricao: string | null
+          fornecedor_id: number | null
+          id: number | null
+          marca: string | null
+          nome: string | null
+          sku: string | null
+          status: string | null
+          subcategoria_id: number | null
+          tamanho: string | null
+        }
+        Insert: {
+          atualizado_em?: string | null
+          cor?: string | null
+          criado_em?: string | null
+          descricao?: string | null
+          fornecedor_id?: number | null
+          id?: number | null
+          marca?: string | null
+          nome?: string | null
+          sku?: string | null
+          status?: string | null
+          subcategoria_id?: number | null
+          tamanho?: string | null
+        }
+        Update: {
+          atualizado_em?: string | null
+          cor?: string | null
+          criado_em?: string | null
+          descricao?: string | null
+          fornecedor_id?: number | null
+          id?: number | null
+          marca?: string | null
+          nome?: string | null
+          sku?: string | null
+          status?: string | null
+          subcategoria_id?: number | null
+          tamanho?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produtos_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produtos_subcategoria_id_fkey"
+            columns: ["subcategoria_id"]
+            isOneToOne: false
+            referencedRelation: "subcategorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      get_product_safe: {
+        Args: { p_produto_id: number }
+        Returns: Json
+      }
       has_elevated_access: {
         Args: { _user_id: string }
         Returns: boolean

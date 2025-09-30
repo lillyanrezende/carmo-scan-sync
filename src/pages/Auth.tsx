@@ -7,6 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Package } from "lucide-react";
+import { z } from "zod";
+
+// Validation schemas
+const emailSchema = z.string().email("Email inválido").max(255, "Email demasiado longo");
+const passwordSchema = z.string().min(8, "Password deve ter pelo menos 8 caracteres").max(72, "Password demasiado longa");
+const nameSchema = z.string().trim().min(2, "Nome deve ter pelo menos 2 caracteres").max(100, "Nome demasiado longo");
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -30,37 +36,58 @@ export default function Auth() {
     setIsLoading(true);
 
     try {
-      if (isSignUp) {
-        // Validação
-        if (!nome.trim()) {
-          toast({
-            title: "Erro",
-            description: "Nome é obrigatório",
-            variant: "destructive",
-          });
-          return;
-        }
+      // Validate email
+      const emailValidation = emailSchema.safeParse(email);
+      if (!emailValidation.success) {
+        toast({
+          title: "Email inválido",
+          description: emailValidation.error.errors[0].message,
+          variant: "destructive",
+        });
+        return;
+      }
 
-        if (password.length < 6) {
+      // Validate password
+      const passwordValidation = passwordSchema.safeParse(password);
+      if (!passwordValidation.success) {
+        toast({
+          title: "Password inválida",
+          description: passwordValidation.error.errors[0].message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (isSignUp) {
+        // Validate name for signup
+        const nameValidation = nameSchema.safeParse(nome);
+        if (!nameValidation.success) {
           toast({
-            title: "Erro",
-            description: "Password deve ter pelo menos 6 caracteres",
+            title: "Nome inválido",
+            description: nameValidation.error.errors[0].message,
             variant: "destructive",
           });
           return;
         }
 
         const { error } = await supabase.auth.signUp({
-          email,
-          password,
+          email: emailValidation.data,
+          password: passwordValidation.data,
           options: {
+            emailRedirectTo: `${window.location.origin}/`,
             data: {
-              nome: nome,
+              nome: nameValidation.data,
             },
           },
         });
 
-        if (error) throw error;
+        if (error) {
+          // Handle specific error cases
+          if (error.message.includes("already registered")) {
+            throw new Error("Este email já está registado. Por favor, faça login.");
+          }
+          throw error;
+        }
 
         toast({
           title: "Conta criada!",
@@ -70,11 +97,17 @@ export default function Auth() {
         navigate("/");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
+          email: emailValidation.data,
+          password: passwordValidation.data,
         });
 
-        if (error) throw error;
+        if (error) {
+          // Handle specific error cases
+          if (error.message.includes("Invalid login credentials")) {
+            throw new Error("Email ou password incorretos.");
+          }
+          throw error;
+        }
 
         toast({
           title: "Login bem-sucedido!",
@@ -83,9 +116,8 @@ export default function Auth() {
         navigate("/");
       }
     } catch (error: any) {
-      console.error("Auth error:", error);
       toast({
-        title: "Erro",
+        title: "Erro de autenticação",
         description: error.message || "Ocorreu um erro. Tente novamente.",
         variant: "destructive",
       });
@@ -148,7 +180,8 @@ export default function Auth() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
-                minLength={6}
+                minLength={8}
+                autoComplete="current-password"
               />
             </div>
 

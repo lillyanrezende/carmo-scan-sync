@@ -32,15 +32,30 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Validate authentication
+    // Validate authentication and get user
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('Missing authorization header');
     }
 
+    // Get authenticated user
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    
+    if (userError || !user) {
+      throw new Error('Invalid or expired token');
+    }
+
     // Parse request
     const body: ScanRequest = await req.json();
-    console.log('Scan request received:', { ...body, usuario: body.usuario });
+    
+    // Ensure usuario matches authenticated user email
+    if (body.usuario !== user.email) {
+      console.warn('Usuario mismatch detected', { provided: body.usuario, actual: user.email });
+      body.usuario = user.email!; // Override with actual user
+    }
+    
+    console.log('Scan request from authenticated user:', { user_id: user.id, tipo: body.tipo_movimentacao });
 
     // Validation
     if (!body.sku_or_ean || !body.tipo_movimentacao || !body.quantidade || !body.usuario) {
@@ -111,7 +126,7 @@ Deno.serve(async (req) => {
       throw error;
     }
 
-    console.log('Movement processed successfully:', data);
+    console.log('Movement processed:', { movement_id: data?.movimentacao_id, user: user.email });
 
     return new Response(
       JSON.stringify(data),
