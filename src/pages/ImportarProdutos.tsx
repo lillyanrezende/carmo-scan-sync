@@ -1,0 +1,280 @@
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Upload, CheckCircle2, AlertCircle, FileSpreadsheet } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { parseNomeComercial } from "@/lib/parse-nome-comercial";
+import * as XLSX from 'xlsx';
+
+export default function ImportarProdutos() {
+  const [file, setFile] = useState<File | null>(null);
+  const [processing, setProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [results, setResults] = useState<{
+    total: number;
+    success: number;
+    errors: string[];
+  } | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+      setResults(null);
+    }
+  };
+
+  const processExcel = async () => {
+    if (!file) return;
+
+    setProcessing(true);
+    setProgress(0);
+    setResults(null);
+
+    try {
+      // Ler o arquivo Excel
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      console.log('Dados do Excel:', jsonData);
+
+      const total = jsonData.length;
+      let success = 0;
+      const errors: string[] = [];
+
+      // Processar cada linha
+      for (let i = 0; i < jsonData.length; i++) {
+        const row: any = jsonData[i];
+        
+        try {
+          // Extrair dados
+          const gtin = row['GTIN']?.toString().trim();
+          const marca = row['Marca']?.toString().trim();
+          const nomeComercial = row['Nome Comercial']?.toString().trim();
+          
+          if (!gtin || !nomeComercial) {
+            errors.push(`Linha ${i + 2}: GTIN ou Nome Comercial em falta`);
+            continue;
+          }
+
+          // Parse do Nome Comercial
+          const parsed = parseNomeComercial(nomeComercial);
+
+          // Verificar se o produto já existe
+          const { data: existingProduct } = await supabase
+            .from('produtos')
+            .select('id')
+            .eq('sku', gtin)
+            .maybeSingle();
+
+          if (existingProduct) {
+            // Atualizar produto existente
+            const { error: updateError } = await supabase
+              .from('produtos')
+              .update({
+                nome: parsed.nome || nomeComercial,
+                marca: marca || parsed.categoria,
+                cor: parsed.cor,
+                tamanho: parsed.tamanho,
+                design: parsed.design,
+                sola: parsed.sola,
+                tipo_pele: parsed.tipo_pele,
+                forma_sapatos: parsed.forma_sapatos,
+                tipo_construcao: parsed.tipo_construcao,
+                atualizado_em: new Date().toISOString(),
+              })
+              .eq('id', existingProduct.id);
+
+            if (updateError) {
+              errors.push(`Linha ${i + 2} (${gtin}): ${updateError.message}`);
+              continue;
+            }
+
+            // Criar/atualizar barcode
+            const { error: barcodeError } = await supabase
+              .from('product_barcodes')
+              .upsert({
+                produto_id: existingProduct.id,
+                ean: gtin,
+                nivel: 'unit',
+                pack_qty: 1,
+              }, {
+                onConflict: 'ean',
+              });
+
+            if (barcodeError) {
+              console.warn(`Aviso: Erro ao criar barcode para ${gtin}:`, barcodeError.message);
+            }
+
+            success++;
+          } else {
+            // Criar novo produto
+            const { data: newProduct, error: insertError } = await supabase
+              .from('produtos')
+              .insert({
+                sku: gtin,
+                nome: parsed.nome || nomeComercial,
+                marca: marca || parsed.categoria,
+                cor: parsed.cor,
+                tamanho: parsed.tamanho,
+                design: parsed.design,
+                sola: parsed.sola,
+                tipo_pele: parsed.tipo_pele,
+                forma_sapatos: parsed.forma_sapatos,
+                tipo_construcao: parsed.tipo_construcao,
+                status: 'ativo',
+              })
+              .select('id')
+              .single();
+
+            if (insertError) {
+              errors.push(`Linha ${i + 2} (${gtin}): ${insertError.message}`);
+              continue;
+            }
+
+            // Criar barcode
+            if (newProduct) {
+              const { error: barcodeError } = await supabase
+                .from('product_barcodes')
+                .insert({
+                  produto_id: newProduct.id,
+                  ean: gtin,
+                  nivel: 'unit',
+                  pack_qty: 1,
+                });
+
+              if (barcodeError) {
+                console.warn(`Aviso: Erro ao criar barcode para ${gtin}:`, barcodeError.message);
+              }
+            }
+
+            success++;
+          }
+        } catch (error: any) {
+          errors.push(`Linha ${i + 2}: ${error.message}`);
+        }
+
+        // Atualizar progresso
+        setProgress(Math.round(((i + 1) / total) * 100));
+      }
+
+      setResults({ total, success, errors });
+
+      if (success > 0) {
+        toast({
+          title: "Importação concluída",
+          description: `${success} de ${total} produtos processados com sucesso`,
+        });
+      }
+
+    } catch (error: any) {
+      console.error('Erro ao processar Excel:', error);
+      toast({
+        title: "Erro na importação",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  return (
+    <div className="container mx-auto p-6 max-w-4xl">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileSpreadsheet className="w-6 h-6" />
+            Importar Produtos do Excel
+          </CardTitle>
+          <CardDescription>
+            Faça upload do arquivo Excel com os códigos de barras. O sistema irá extrair automaticamente as informações do campo "Nome Comercial".
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Arquivo Excel (.xlsx)</label>
+            <div className="flex gap-2">
+              <Input
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleFileChange}
+                disabled={processing}
+              />
+              {file && !processing && (
+                <Button onClick={processExcel} className="whitespace-nowrap">
+                  <Upload className="w-4 h-4 mr-2" />
+                  Processar
+                </Button>
+              )}
+            </div>
+            {file && (
+              <p className="text-sm text-muted-foreground">
+                Ficheiro selecionado: {file.name}
+              </p>
+            )}
+          </div>
+
+          {processing && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span>A processar...</span>
+                <span>{progress}%</span>
+              </div>
+              <Progress value={progress} />
+            </div>
+          )}
+
+          {results && (
+            <div className="space-y-4">
+              <Alert variant={results.errors.length > 0 ? "default" : "default"}>
+                <CheckCircle2 className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Processados: {results.success}/{results.total}</strong>
+                  <p className="text-sm mt-1">
+                    {results.success} produtos atualizados/criados com sucesso
+                  </p>
+                </AlertDescription>
+              </Alert>
+
+              {results.errors.length > 0 && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Erros encontrados ({results.errors.length}):</strong>
+                    <div className="mt-2 max-h-48 overflow-y-auto text-xs space-y-1">
+                      {results.errors.slice(0, 20).map((error, idx) => (
+                        <div key={idx} className="font-mono">• {error}</div>
+                      ))}
+                      {results.errors.length > 20 && (
+                        <div className="italic">... e mais {results.errors.length - 20} erros</div>
+                      )}
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          )}
+
+          <div className="border rounded-lg p-4 bg-muted/50 text-sm space-y-2">
+            <h4 className="font-medium">Formato esperado do Excel:</h4>
+            <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+              <li><strong>GTIN</strong>: Código de barras (será usado como SKU)</li>
+              <li><strong>Marca</strong>: Marca do produto</li>
+              <li><strong>Nome Comercial</strong>: Campo com informações separadas por " - " na ordem:</li>
+              <ul className="list-disc list-inside ml-6 text-xs">
+                <li>Categoria - Subcategoria - Nome - Design - Cor - Tamanho - Sola - Tipo de pele - Forma de Sapatos - Tipo de Construção - Armazém</li>
+              </ul>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

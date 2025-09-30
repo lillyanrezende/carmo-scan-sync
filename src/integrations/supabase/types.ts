@@ -314,6 +314,8 @@ export type Database = {
           cor: string | null
           criado_em: string | null
           descricao: string | null
+          design: string | null
+          forma_sapatos: string | null
           fornecedor_id: number | null
           id: number
           marca: string | null
@@ -321,15 +323,20 @@ export type Database = {
           preco_custo: number | null
           preco_venda: number | null
           sku: string
+          sola: string | null
           status: string | null
           subcategoria_id: number | null
           tamanho: string | null
+          tipo_construcao: string | null
+          tipo_pele: string | null
         }
         Insert: {
           atualizado_em?: string | null
           cor?: string | null
           criado_em?: string | null
           descricao?: string | null
+          design?: string | null
+          forma_sapatos?: string | null
           fornecedor_id?: number | null
           id?: number
           marca?: string | null
@@ -337,15 +344,20 @@ export type Database = {
           preco_custo?: number | null
           preco_venda?: number | null
           sku: string
+          sola?: string | null
           status?: string | null
           subcategoria_id?: number | null
           tamanho?: string | null
+          tipo_construcao?: string | null
+          tipo_pele?: string | null
         }
         Update: {
           atualizado_em?: string | null
           cor?: string | null
           criado_em?: string | null
           descricao?: string | null
+          design?: string | null
+          forma_sapatos?: string | null
           fornecedor_id?: number | null
           id?: number
           marca?: string | null
@@ -353,9 +365,12 @@ export type Database = {
           preco_custo?: number | null
           preco_venda?: number | null
           sku?: string
+          sola?: string | null
           status?: string | null
           subcategoria_id?: number | null
           tamanho?: string | null
+          tipo_construcao?: string | null
+          tipo_pele?: string | null
         }
         Relationships: [
           {

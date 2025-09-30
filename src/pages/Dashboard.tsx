@@ -5,7 +5,7 @@ import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { LogOut, Camera, Package, History, Wifi, WifiOff } from "lucide-react";
+import { LogOut, Camera, Package, History, Wifi, WifiOff, FileSpreadsheet } from "lucide-react";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { ProductInfo } from "@/components/ProductInfo";
 import { MovementForm } from "@/components/MovementForm";
@@ -137,7 +137,7 @@ export default function Dashboard() {
         {/* Quick Actions */}
         {!scannedCode && !showScanner && (
           <Card className="p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Button
                 size="lg"
                 onClick={() => setShowScanner(true)}
@@ -155,6 +155,16 @@ export default function Dashboard() {
               >
                 <History className="w-6 h-6 mr-2" />
                 Ver Histórico
+              </Button>
+
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => navigate("/importar")}
+                className="h-24 text-lg"
+              >
+                <FileSpreadsheet className="w-6 h-6 mr-2" />
+                Importar Produtos
               </Button>
             </div>
           </Card>

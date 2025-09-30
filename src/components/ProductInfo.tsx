@@ -122,6 +122,31 @@ export function ProductInfo({ code }: ProductInfoProps) {
               <span className="font-medium">Tamanho:</span> {produto.tamanho}
             </div>
           )}
+          {produto.design && (
+            <div>
+              <span className="font-medium">Design:</span> {produto.design}
+            </div>
+          )}
+          {produto.sola && (
+            <div>
+              <span className="font-medium">Sola:</span> {produto.sola}
+            </div>
+          )}
+          {produto.tipo_pele && (
+            <div>
+              <span className="font-medium">Tipo de Pele:</span> {produto.tipo_pele}
+            </div>
+          )}
+          {produto.forma_sapatos && (
+            <div>
+              <span className="font-medium">Forma:</span> {produto.forma_sapatos}
+            </div>
+          )}
+          {produto.tipo_construcao && (
+            <div>
+              <span className="font-medium">Construção:</span> {produto.tipo_construcao}
+            </div>
+          )}
           {produto.subcategorias && (
             <div>
               <span className="font-medium">Categoria:</span>{" "}
