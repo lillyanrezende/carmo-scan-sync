@@ -31,20 +31,22 @@ export function ProductInfo({ code }: ProductInfoProps) {
           throw new Error("Não autenticado");
         }
 
-        const response = await supabase.functions.invoke('product', {
-          method: 'GET',
+        // Determine if code is SKU or EAN
+        const isEAN = /^\d{8}$|^\d{13}$|^\d{14}$/.test(code);
+        const queryParam = isEAN ? `ean=${code}` : `sku=${code}`;
+
+        const response = await supabase.functions.invoke(`product?${queryParam}`, {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
           },
-          body: { sku: code },
         });
 
         if (response.error) {
           throw response.error;
         }
 
-        if (!response.data.ok) {
-          throw new Error(response.data.error);
+        if (!response.data || !response.data.ok) {
+          throw new Error(response.data?.error || 'Produto não encontrado');
         }
 
         setData(response.data);

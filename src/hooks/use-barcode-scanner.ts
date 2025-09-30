@@ -19,10 +19,16 @@ export function useBarcodeScanner() {
       }
 
       console.log('📱 Solicitando permissão de câmera...');
-      // Request camera permission
+      
+      // Request camera permission with constraints
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' } // Use back camera on mobile
+        video: { 
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
       });
+      
       console.log('✅ Permissão de câmera concedida!');
 
       if (videoRef.current) {

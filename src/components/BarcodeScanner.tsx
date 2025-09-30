@@ -10,18 +10,35 @@ interface BarcodeScannerProps {
 }
 
 export function BarcodeScanner({ onScanComplete, onCancel }: BarcodeScannerProps) {
-  const { isScanning, scannedCode, videoRef, startScanner, stopScanner } = useBarcodeScanner();
+  const { isScanning, scannedCode, videoRef, startScanner, stopScanner, clearScannedCode } = useBarcodeScanner();
 
   useEffect(() => {
-    startScanner();
-    return () => stopScanner();
+    let mounted = true;
+    
+    const initScanner = async () => {
+      if (mounted) {
+        try {
+          await startScanner();
+        } catch (err) {
+          console.error('Failed to init scanner:', err);
+        }
+      }
+    };
+    
+    initScanner();
+    
+    return () => {
+      mounted = false;
+      stopScanner();
+    };
   }, []);
 
   useEffect(() => {
     if (scannedCode) {
       onScanComplete(scannedCode);
+      clearScannedCode();
     }
-  }, [scannedCode, onScanComplete]);
+  }, [scannedCode, onScanComplete, clearScannedCode]);
 
   return (
     <Card>
