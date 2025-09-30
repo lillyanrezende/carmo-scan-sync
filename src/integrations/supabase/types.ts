@@ -104,6 +104,42 @@ export type Database = {
         }
         Relationships: []
       }
+      cores: {
+        Row: {
+          criado_em: string | null
+          id: number
+          nome: string
+        }
+        Insert: {
+          criado_em?: string | null
+          id?: number
+          nome: string
+        }
+        Update: {
+          criado_em?: string | null
+          id?: number
+          nome?: string
+        }
+        Relationships: []
+      }
+      designs: {
+        Row: {
+          criado_em: string | null
+          id: number
+          nome: string
+        }
+        Insert: {
+          criado_em?: string | null
+          id?: number
+          nome: string
+        }
+        Update: {
+          criado_em?: string | null
+          id?: number
+          nome?: string
+        }
+        Relationships: []
+      }
       estoques: {
         Row: {
           armazem_id: number
@@ -152,6 +188,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      formas: {
+        Row: {
+          criado_em: string | null
+          id: number
+          nome: string
+        }
+        Insert: {
+          criado_em?: string | null
+          id?: number
+          nome: string
+        }
+        Update: {
+          criado_em?: string | null
+          id?: number
+          nome?: string
+        }
+        Relationships: []
       }
       fornecedores: {
         Row: {
@@ -310,12 +364,16 @@ export type Database = {
       }
       produtos: {
         Row: {
+          armazem_id: number | null
           atualizado_em: string | null
           cor: string | null
+          cores_id: number | null
           criado_em: string | null
           descricao: string | null
           design: string | null
+          designs_id: number | null
           forma_sapatos: string | null
+          formas_id: number | null
           fornecedor_id: number | null
           id: number
           marca: string | null
@@ -327,16 +385,24 @@ export type Database = {
           status: string | null
           subcategoria_id: number | null
           tamanho: string | null
+          tamanhos_id: number | null
           tipo_construcao: string | null
+          tipo_de_construcao_id: number | null
+          tipo_de_pele_id: number | null
+          tipo_de_sola_id: number | null
           tipo_pele: string | null
         }
         Insert: {
+          armazem_id?: number | null
           atualizado_em?: string | null
           cor?: string | null
+          cores_id?: number | null
           criado_em?: string | null
           descricao?: string | null
           design?: string | null
+          designs_id?: number | null
           forma_sapatos?: string | null
+          formas_id?: number | null
           fornecedor_id?: number | null
           id?: number
           marca?: string | null
@@ -348,16 +414,24 @@ export type Database = {
           status?: string | null
           subcategoria_id?: number | null
           tamanho?: string | null
+          tamanhos_id?: number | null
           tipo_construcao?: string | null
+          tipo_de_construcao_id?: number | null
+          tipo_de_pele_id?: number | null
+          tipo_de_sola_id?: number | null
           tipo_pele?: string | null
         }
         Update: {
+          armazem_id?: number | null
           atualizado_em?: string | null
           cor?: string | null
+          cores_id?: number | null
           criado_em?: string | null
           descricao?: string | null
           design?: string | null
+          designs_id?: number | null
           forma_sapatos?: string | null
+          formas_id?: number | null
           fornecedor_id?: number | null
           id?: number
           marca?: string | null
@@ -369,10 +443,42 @@ export type Database = {
           status?: string | null
           subcategoria_id?: number | null
           tamanho?: string | null
+          tamanhos_id?: number | null
           tipo_construcao?: string | null
+          tipo_de_construcao_id?: number | null
+          tipo_de_pele_id?: number | null
+          tipo_de_sola_id?: number | null
           tipo_pele?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "produtos_armazem_id_fkey"
+            columns: ["armazem_id"]
+            isOneToOne: false
+            referencedRelation: "armazens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produtos_cores_id_fkey"
+            columns: ["cores_id"]
+            isOneToOne: false
+            referencedRelation: "cores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produtos_designs_id_fkey"
+            columns: ["designs_id"]
+            isOneToOne: false
+            referencedRelation: "designs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produtos_formas_id_fkey"
+            columns: ["formas_id"]
+            isOneToOne: false
+            referencedRelation: "formas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "produtos_fornecedor_id_fkey"
             columns: ["fornecedor_id"]
@@ -385,6 +491,34 @@ export type Database = {
             columns: ["subcategoria_id"]
             isOneToOne: false
             referencedRelation: "subcategorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produtos_tamanhos_id_fkey"
+            columns: ["tamanhos_id"]
+            isOneToOne: false
+            referencedRelation: "tamanhos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produtos_tipo_de_construcao_id_fkey"
+            columns: ["tipo_de_construcao_id"]
+            isOneToOne: false
+            referencedRelation: "tipo_de_construcao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produtos_tipo_de_pele_id_fkey"
+            columns: ["tipo_de_pele_id"]
+            isOneToOne: false
+            referencedRelation: "tipo_de_pele"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produtos_tipo_de_sola_id_fkey"
+            columns: ["tipo_de_sola_id"]
+            isOneToOne: false
+            referencedRelation: "tipo_de_sola"
             referencedColumns: ["id"]
           },
         ]
@@ -420,6 +554,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tamanhos: {
+        Row: {
+          criado_em: string | null
+          id: number
+          numero: string
+        }
+        Insert: {
+          criado_em?: string | null
+          id?: number
+          numero: string
+        }
+        Update: {
+          criado_em?: string | null
+          id?: number
+          numero?: string
+        }
+        Relationships: []
+      }
+      tipo_de_construcao: {
+        Row: {
+          criado_em: string | null
+          id: number
+          nome: string
+        }
+        Insert: {
+          criado_em?: string | null
+          id?: number
+          nome: string
+        }
+        Update: {
+          criado_em?: string | null
+          id?: number
+          nome?: string
+        }
+        Relationships: []
+      }
+      tipo_de_pele: {
+        Row: {
+          criado_em: string | null
+          id: number
+          nome: string
+        }
+        Insert: {
+          criado_em?: string | null
+          id?: number
+          nome: string
+        }
+        Update: {
+          criado_em?: string | null
+          id?: number
+          nome?: string
+        }
+        Relationships: []
+      }
+      tipo_de_sola: {
+        Row: {
+          criado_em: string | null
+          id: number
+          nome: string
+        }
+        Insert: {
+          criado_em?: string | null
+          id?: number
+          nome: string
+        }
+        Update: {
+          criado_em?: string | null
+          id?: number
+          nome?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {

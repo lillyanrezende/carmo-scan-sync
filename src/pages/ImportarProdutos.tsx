@@ -27,6 +27,166 @@ export default function ImportarProdutos() {
     }
   };
 
+  // Helper function to get or create reference data
+  const getOrCreateReference = async (
+    table: string,
+    value: string | null
+  ): Promise<number | null> => {
+    if (!value) return null;
+
+    try {
+      // Check if exists
+      const { data: existing, error: selectError } = await supabase
+        .from(table as any)
+        .select('id')
+        .eq('nome', value)
+        .maybeSingle();
+
+      if (existing && 'id' in existing) return Number(existing.id);
+
+      // Create new
+      const { data: created, error: insertError } = await supabase
+        .from(table as any)
+        .insert({ nome: value })
+        .select('id')
+        .single();
+
+      if (insertError) {
+        console.error(`Erro ao criar ${table}:`, insertError);
+        return null;
+      }
+
+      return created && 'id' in created ? Number(created.id) : null;
+    } catch (error) {
+      console.error(`Erro ao processar ${table}:`, error);
+      return null;
+    }
+  };
+
+  // Helper for tamanhos (uses "numero" instead of "nome")
+  const getOrCreateTamanho = async (value: string | null): Promise<number | null> => {
+    if (!value) return null;
+
+    try {
+      const { data: existing } = await supabase
+        .from('tamanhos' as any)
+        .select('id')
+        .eq('numero', value)
+        .maybeSingle();
+
+      if (existing && 'id' in existing) return Number(existing.id);
+
+      const { data: created, error } = await supabase
+        .from('tamanhos' as any)
+        .insert({ numero: value })
+        .select('id')
+        .single();
+
+      if (error) {
+        console.error('Erro ao criar tamanho:', error);
+        return null;
+      }
+
+      return created && 'id' in created ? Number(created.id) : null;
+    } catch (error) {
+      console.error('Erro ao processar tamanho:', error);
+      return null;
+    }
+  };
+
+  // Helper for subcategoria (needs categoria_id)
+  const getOrCreateSubcategoria = async (
+    subcategoriaName: string | null,
+    categoriaName: string | null
+  ): Promise<number | null> => {
+    if (!subcategoriaName) return null;
+
+    try {
+      // First get or create categoria
+      let categoriaId: number | null = null;
+      if (categoriaName) {
+        const { data: existingCat } = await supabase
+          .from('categorias')
+          .select('id')
+          .eq('nome', categoriaName)
+          .maybeSingle();
+
+        if (existingCat && 'id' in existingCat) {
+          categoriaId = Number(existingCat.id);
+        } else {
+          const { data: createdCat } = await supabase
+            .from('categorias')
+            .insert({ nome: categoriaName })
+            .select('id')
+            .single();
+          categoriaId = createdCat && 'id' in createdCat ? Number(createdCat.id) : null;
+        }
+      }
+
+      // Then get or create subcategoria
+      const { data: existingSub } = await supabase
+        .from('subcategorias')
+        .select('id')
+        .eq('nome', subcategoriaName)
+        .maybeSingle();
+
+      if (existingSub && 'id' in existingSub) return Number(existingSub.id);
+
+      const { data: createdSub, error } = await supabase
+        .from('subcategorias')
+        .insert({ 
+          nome: subcategoriaName,
+          categoria_id: categoriaId 
+        })
+        .select('id')
+        .single();
+
+      if (error) {
+        console.error('Erro ao criar subcategoria:', error);
+        return null;
+      }
+
+      return createdSub && 'id' in createdSub ? Number(createdSub.id) : null;
+    } catch (error) {
+      console.error('Erro ao processar subcategoria:', error);
+      return null;
+    }
+  };
+
+  // Helper for armazem
+  const getOrCreateArmazem = async (value: string | null): Promise<number | null> => {
+    if (!value) return null;
+
+    try {
+      const { data: existing } = await supabase
+        .from('armazens')
+        .select('id')
+        .eq('nome', value)
+        .maybeSingle();
+
+      if (existing && 'id' in existing) return Number(existing.id);
+
+      const { data: created, error } = await supabase
+        .from('armazens')
+        .insert({ 
+          nome: value,
+          codigo: value.substring(0, 20) // Generate a simple code
+        })
+        .select('id')
+        .single();
+
+      if (error) {
+        console.error('Erro ao criar armazem:', error);
+        return null;
+      }
+
+      return created && 'id' in created ? Number(created.id) : null;
+    } catch (error) {
+      console.error('Erro ao processar armazem:', error);
+      return null;
+    }
+  };
+
   const processExcel = async () => {
     if (!file) return;
 
@@ -66,6 +226,29 @@ export default function ImportarProdutos() {
           // Parse do Nome Comercial
           const parsed = parseNomeComercial(nomeComercial);
 
+          // Get or create all reference IDs
+          const [
+            subcategoriaId,
+            designId,
+            corId,
+            tamanhoId,
+            solaId,
+            tipoPeleId,
+            formaId,
+            tipoConstrucaoId,
+            armazemId
+          ] = await Promise.all([
+            getOrCreateSubcategoria(parsed.subcategoria, parsed.categoria),
+            getOrCreateReference('designs', parsed.design),
+            getOrCreateReference('cores', parsed.cor),
+            getOrCreateTamanho(parsed.tamanho),
+            getOrCreateReference('tipo_de_sola', parsed.sola),
+            getOrCreateReference('tipo_de_pele', parsed.tipo_pele),
+            getOrCreateReference('formas', parsed.forma_sapatos),
+            getOrCreateReference('tipo_de_construcao', parsed.tipo_construcao),
+            getOrCreateArmazem(parsed.armazem)
+          ]);
+
           // Verificar se o produto já existe
           const { data: existingProduct } = await supabase
             .from('produtos')
@@ -80,13 +263,15 @@ export default function ImportarProdutos() {
               .update({
                 nome: parsed.nome || nomeComercial,
                 marca: marca || parsed.categoria,
-                cor: parsed.cor,
-                tamanho: parsed.tamanho,
-                design: parsed.design,
-                sola: parsed.sola,
-                tipo_pele: parsed.tipo_pele,
-                forma_sapatos: parsed.forma_sapatos,
-                tipo_construcao: parsed.tipo_construcao,
+                subcategoria_id: subcategoriaId,
+                designs_id: designId,
+                cores_id: corId,
+                tamanhos_id: tamanhoId,
+                tipo_de_sola_id: solaId,
+                tipo_de_pele_id: tipoPeleId,
+                formas_id: formaId,
+                tipo_de_construcao_id: tipoConstrucaoId,
+                armazem_id: armazemId,
                 atualizado_em: new Date().toISOString(),
               })
               .eq('id', existingProduct.id);
@@ -121,13 +306,15 @@ export default function ImportarProdutos() {
                 sku: gtin,
                 nome: parsed.nome || nomeComercial,
                 marca: marca || parsed.categoria,
-                cor: parsed.cor,
-                tamanho: parsed.tamanho,
-                design: parsed.design,
-                sola: parsed.sola,
-                tipo_pele: parsed.tipo_pele,
-                forma_sapatos: parsed.forma_sapatos,
-                tipo_construcao: parsed.tipo_construcao,
+                subcategoria_id: subcategoriaId,
+                designs_id: designId,
+                cores_id: corId,
+                tamanhos_id: tamanhoId,
+                tipo_de_sola_id: solaId,
+                tipo_de_pele_id: tipoPeleId,
+                formas_id: formaId,
+                tipo_de_construcao_id: tipoConstrucaoId,
+                armazem_id: armazemId,
                 status: 'ativo',
               })
               .select('id')
