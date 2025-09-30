@@ -43,12 +43,7 @@ export function OfflineQueue() {
 
       for (const movement of pending) {
         try {
-          const response = await supabase.functions.invoke('scan', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-              'Content-Type': 'application/json',
-            },
+          const { data: response, error: invokeError } = await supabase.functions.invoke('scan', {
             body: {
               sku_or_ean: movement.sku_or_ean,
               tipo_movimentacao: movement.tipo_movimentacao,
@@ -61,8 +56,12 @@ export function OfflineQueue() {
             },
           });
 
-          if (response.error || !response.data.ok) {
-            throw new Error(response.data?.error || 'Erro desconhecido');
+          if (invokeError) {
+            throw new Error(invokeError.message || 'Erro ao chamar função');
+          }
+
+          if (!response || !response.ok) {
+            throw new Error(response?.error || 'Erro desconhecido');
           }
 
           OfflineQueueManager.markSuccess(movement.id);
