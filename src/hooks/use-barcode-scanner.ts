@@ -11,20 +11,32 @@ export function useBarcodeScanner() {
 
   const startScanner = async () => {
     try {
+      console.log('🎥 Iniciando scanner...');
+      
+      // Check if getUserMedia is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('getUserMedia não está disponível. Verifique se está usando HTTPS.');
+      }
+
+      console.log('📱 Solicitando permissão de câmera...');
       // Request camera permission
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment' } // Use back camera on mobile
       });
+      console.log('✅ Permissão de câmera concedida!');
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
         setIsScanning(true);
+        console.log('📹 Stream de vídeo configurado');
       }
 
       // Use ZXing library for barcode detection
+      console.log('📚 Carregando biblioteca ZXing...');
       const { BrowserMultiFormatReader } = await import('@zxing/library');
       const codeReader = new BrowserMultiFormatReader();
+      console.log('✅ ZXing carregado com sucesso');
       
       scannerRef.current = codeReader;
 
@@ -57,10 +69,27 @@ export function useBarcodeScanner() {
       );
 
     } catch (error) {
-      console.error('Failed to start scanner:', error);
+      console.error('❌ Erro ao iniciar scanner:', error);
+      
+      let errorMessage = 'Verifique as permissões da câmera';
+      
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          errorMessage = 'Permissão negada. Por favor, permita o acesso à câmera nas configurações do navegador.';
+        } else if (error.name === 'NotFoundError') {
+          errorMessage = 'Nenhuma câmera encontrada no dispositivo.';
+        } else if (error.name === 'NotReadableError') {
+          errorMessage = 'Câmera está em uso por outra aplicação.';
+        } else if (error.message.includes('HTTPS')) {
+          errorMessage = 'O acesso à câmera requer conexão segura (HTTPS).';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: 'Erro ao Aceder à Câmera',
-        description: 'Verifique as permissões da câmera',
+        description: errorMessage,
         variant: 'destructive',
       });
       setIsScanning(false);
