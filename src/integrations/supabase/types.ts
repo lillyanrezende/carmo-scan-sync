@@ -14,13 +14,357 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      armazens: {
+        Row: {
+          ativo: boolean | null
+          atualizado_em: string | null
+          codigo: string
+          criado_em: string | null
+          id: number
+          morada: string | null
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          atualizado_em?: string | null
+          codigo: string
+          criado_em?: string | null
+          id?: number
+          morada?: string | null
+          nome: string
+        }
+        Update: {
+          ativo?: boolean | null
+          atualizado_em?: string | null
+          codigo?: string
+          criado_em?: string | null
+          id?: number
+          morada?: string | null
+          nome?: string
+        }
+        Relationships: []
+      }
+      categorias: {
+        Row: {
+          criado_em: string | null
+          descricao: string | null
+          id: number
+          nome: string
+        }
+        Insert: {
+          criado_em?: string | null
+          descricao?: string | null
+          id?: number
+          nome: string
+        }
+        Update: {
+          criado_em?: string | null
+          descricao?: string | null
+          id?: number
+          nome?: string
+        }
+        Relationships: []
+      }
+      estoques: {
+        Row: {
+          armazem_id: number
+          atualizado_em: string | null
+          id: number
+          produto_id: number
+          quantidade: number | null
+          quantidade_reservada: number | null
+        }
+        Insert: {
+          armazem_id: number
+          atualizado_em?: string | null
+          id?: number
+          produto_id: number
+          quantidade?: number | null
+          quantidade_reservada?: number | null
+        }
+        Update: {
+          armazem_id?: number
+          atualizado_em?: string | null
+          id?: number
+          produto_id?: number
+          quantidade?: number | null
+          quantidade_reservada?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoques_armazem_id_fkey"
+            columns: ["armazem_id"]
+            isOneToOne: false
+            referencedRelation: "armazens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoques_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fornecedores: {
+        Row: {
+          ativo: boolean | null
+          atualizado_em: string | null
+          codigo: string
+          contacto_email: string | null
+          contacto_telefone: string | null
+          criado_em: string | null
+          id: number
+          morada: string | null
+          nif: string | null
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          atualizado_em?: string | null
+          codigo: string
+          contacto_email?: string | null
+          contacto_telefone?: string | null
+          criado_em?: string | null
+          id?: number
+          morada?: string | null
+          nif?: string | null
+          nome: string
+        }
+        Update: {
+          ativo?: boolean | null
+          atualizado_em?: string | null
+          codigo?: string
+          contacto_email?: string | null
+          contacto_telefone?: string | null
+          criado_em?: string | null
+          id?: number
+          morada?: string | null
+          nif?: string | null
+          nome?: string
+        }
+        Relationships: []
+      }
+      movimentacao_estoque: {
+        Row: {
+          armazem_destino_id: number | null
+          armazem_origem_id: number | null
+          criado_em: string | null
+          hash_idempotencia: string | null
+          id: number
+          observacoes: string | null
+          produto_id: number
+          quantidade: number
+          sync_status: string | null
+          timestamp: string | null
+          tipo_movimentacao: string
+          usuario: string
+        }
+        Insert: {
+          armazem_destino_id?: number | null
+          armazem_origem_id?: number | null
+          criado_em?: string | null
+          hash_idempotencia?: string | null
+          id?: number
+          observacoes?: string | null
+          produto_id: number
+          quantidade: number
+          sync_status?: string | null
+          timestamp?: string | null
+          tipo_movimentacao: string
+          usuario: string
+        }
+        Update: {
+          armazem_destino_id?: number | null
+          armazem_origem_id?: number | null
+          criado_em?: string | null
+          hash_idempotencia?: string | null
+          id?: number
+          observacoes?: string | null
+          produto_id?: number
+          quantidade?: number
+          sync_status?: string | null
+          timestamp?: string | null
+          tipo_movimentacao?: string
+          usuario?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacao_estoque_armazem_destino_id_fkey"
+            columns: ["armazem_destino_id"]
+            isOneToOne: false
+            referencedRelation: "armazens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacao_estoque_armazem_origem_id_fkey"
+            columns: ["armazem_origem_id"]
+            isOneToOne: false
+            referencedRelation: "armazens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacao_estoque_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_barcodes: {
+        Row: {
+          criado_em: string | null
+          ean: string
+          id: number
+          nivel: string | null
+          pack_qty: number | null
+          produto_id: number
+        }
+        Insert: {
+          criado_em?: string | null
+          ean: string
+          id?: number
+          nivel?: string | null
+          pack_qty?: number | null
+          produto_id: number
+        }
+        Update: {
+          criado_em?: string | null
+          ean?: string
+          id?: number
+          nivel?: string | null
+          pack_qty?: number | null
+          produto_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_barcodes_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      produtos: {
+        Row: {
+          atualizado_em: string | null
+          cor: string | null
+          criado_em: string | null
+          descricao: string | null
+          fornecedor_id: number | null
+          id: number
+          marca: string | null
+          nome: string
+          preco_custo: number | null
+          preco_venda: number | null
+          sku: string
+          status: string | null
+          subcategoria_id: number | null
+          tamanho: string | null
+        }
+        Insert: {
+          atualizado_em?: string | null
+          cor?: string | null
+          criado_em?: string | null
+          descricao?: string | null
+          fornecedor_id?: number | null
+          id?: number
+          marca?: string | null
+          nome: string
+          preco_custo?: number | null
+          preco_venda?: number | null
+          sku: string
+          status?: string | null
+          subcategoria_id?: number | null
+          tamanho?: string | null
+        }
+        Update: {
+          atualizado_em?: string | null
+          cor?: string | null
+          criado_em?: string | null
+          descricao?: string | null
+          fornecedor_id?: number | null
+          id?: number
+          marca?: string | null
+          nome?: string
+          preco_custo?: number | null
+          preco_venda?: number | null
+          sku?: string
+          status?: string | null
+          subcategoria_id?: number | null
+          tamanho?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produtos_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produtos_subcategoria_id_fkey"
+            columns: ["subcategoria_id"]
+            isOneToOne: false
+            referencedRelation: "subcategorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subcategorias: {
+        Row: {
+          categoria_id: number | null
+          criado_em: string | null
+          descricao: string | null
+          id: number
+          nome: string
+        }
+        Insert: {
+          categoria_id?: number | null
+          criado_em?: string | null
+          descricao?: string | null
+          id?: number
+          nome: string
+        }
+        Update: {
+          categoria_id?: number | null
+          criado_em?: string | null
+          descricao?: string | null
+          id?: number
+          nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcategorias_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      processar_movimentacao: {
+        Args: {
+          p_destino_id: number
+          p_hash_idempotencia?: string
+          p_observacoes?: string
+          p_origem_id: number
+          p_produto_id: number
+          p_quantidade: number
+          p_timestamp?: string
+          p_tipo: string
+          p_usuario: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
