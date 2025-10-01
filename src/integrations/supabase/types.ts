@@ -378,6 +378,7 @@ export type Database = {
           id: number
           marca: string | null
           nome: string
+          nome_comercial: string | null
           preco_custo: number | null
           preco_venda: number | null
           sku: string
@@ -391,6 +392,7 @@ export type Database = {
           tipo_de_pele_id: number | null
           tipo_de_sola_id: number | null
           tipo_pele: string | null
+          tipo_produto: string | null
         }
         Insert: {
           armazem_id?: number | null
@@ -407,6 +409,7 @@ export type Database = {
           id?: number
           marca?: string | null
           nome: string
+          nome_comercial?: string | null
           preco_custo?: number | null
           preco_venda?: number | null
           sku: string
@@ -420,6 +423,7 @@ export type Database = {
           tipo_de_pele_id?: number | null
           tipo_de_sola_id?: number | null
           tipo_pele?: string | null
+          tipo_produto?: string | null
         }
         Update: {
           armazem_id?: number | null
@@ -436,6 +440,7 @@ export type Database = {
           id?: number
           marca?: string | null
           nome?: string
+          nome_comercial?: string | null
           preco_custo?: number | null
           preco_venda?: number | null
           sku?: string
@@ -449,6 +454,7 @@ export type Database = {
           tipo_de_pele_id?: number | null
           tipo_de_sola_id?: number | null
           tipo_pele?: string | null
+          tipo_produto?: string | null
         }
         Relationships: [
           {

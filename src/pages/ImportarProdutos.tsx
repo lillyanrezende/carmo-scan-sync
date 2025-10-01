@@ -215,8 +215,10 @@ export default function ImportarProdutos() {
         try {
           // Extrair dados
           const gtin = row['GTIN']?.toString().trim();
+          const codigoInterno = row['Código Interno']?.toString().trim();
           const marca = row['Marca']?.toString().trim();
           const nomeComercial = row['Nome Comercial']?.toString().trim();
+          const tipoProduto = row['Tipo de Produto']?.toString().trim();
           
           if (!gtin || !nomeComercial) {
             errors.push(`Linha ${i + 2}: GTIN ou Nome Comercial em falta`);
@@ -261,7 +263,10 @@ export default function ImportarProdutos() {
             const { error: updateError } = await supabase
               .from('produtos')
               .update({
+                sku: codigoInterno || gtin,
                 nome: parsed.nome || nomeComercial,
+                nome_comercial: nomeComercial,
+                tipo_produto: tipoProduto,
                 marca: marca || parsed.categoria,
                 subcategoria_id: subcategoriaId,
                 designs_id: designId,
@@ -303,8 +308,10 @@ export default function ImportarProdutos() {
             const { data: newProduct, error: insertError } = await supabase
               .from('produtos')
               .insert({
-                sku: gtin,
+                sku: codigoInterno || gtin,
                 nome: parsed.nome || nomeComercial,
+                nome_comercial: nomeComercial,
+                tipo_produto: tipoProduto,
                 marca: marca || parsed.categoria,
                 subcategoria_id: subcategoriaId,
                 designs_id: designId,
@@ -452,9 +459,12 @@ export default function ImportarProdutos() {
           <div className="border rounded-lg p-4 bg-muted/50 text-sm space-y-2">
             <h4 className="font-medium">Formato esperado do Excel:</h4>
             <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-              <li><strong>GTIN</strong>: Código de barras (será usado como SKU)</li>
+              <li><strong>GTIN</strong>: Código de barras EAN</li>
+              <li><strong>Código Interno</strong>: SKU/código interno do produto (opcional, usa GTIN se vazio)</li>
               <li><strong>Marca</strong>: Marca do produto</li>
-              <li><strong>Nome Comercial</strong>: Campo com informações separadas por " - " na ordem:</li>
+              <li><strong>Nome Comercial</strong>: Nome completo do produto (será guardado e parseado)</li>
+              <li><strong>Tipo de Produto</strong>: Categoria/tipo do produto</li>
+              <li className="text-xs mt-2">O <strong>Nome Comercial</strong> pode ter informações separadas por " - ":</li>
               <ul className="list-disc list-inside ml-6 text-xs">
                 <li>Categoria - Subcategoria - Nome - Design - Cor - Tamanho - Sola - Tipo de pele - Forma de Sapatos - Tipo de Construção - Armazém</li>
               </ul>
