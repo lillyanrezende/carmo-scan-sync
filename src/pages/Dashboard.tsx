@@ -5,12 +5,13 @@ import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { LogOut, Camera, Package, History, Wifi, WifiOff, FileSpreadsheet } from "lucide-react";
+import { LogOut, Camera, History, Wifi, WifiOff, FileSpreadsheet } from "lucide-react";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { ProductInfo } from "@/components/ProductInfo";
 import { MovementForm } from "@/components/MovementForm";
 import { OfflineQueue as OfflineQueueComp } from "@/components/OfflineQueue";
 import { OfflineQueue } from "@/lib/offline-queue";
+import logo from "@/assets/logo.svg";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -97,14 +98,9 @@ export default function Dashboard() {
       {/* Header */}
       <header className="bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-              <Package className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold">Sapataria do Carmo</h1>
-              <p className="text-sm text-muted-foreground">Olá, {userName}</p>
-            </div>
+          <div className="flex items-center gap-4">
+            <img src={logo} alt="Sapataria do Carmo" className="h-12" />
+            <p className="text-sm text-muted-foreground">Olá, {userName}</p>
           </div>
 
           <div className="flex items-center gap-2">
